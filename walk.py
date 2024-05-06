@@ -49,7 +49,7 @@ def prepare_file_dictionary(root_path):
 
     return file_dict
 
-def main():
+def getdict():
     cwd = os.getcwd()
 
     if len(sys.argv) > 1:
@@ -64,13 +64,4 @@ def main():
 
     file_dict = prepare_file_dictionary(abs_path)
 
-    # Display the dictionary
-    print("Dictionary of Files and Contents:")
-    for file_path, contents in file_dict.items():
-        print(f"File Path: {file_path}")
-        print("Contents:")
-        print(contents)
-        print("\n---\n")
-
-if __name__ == "__main__":
-    main()
+    return file_dict
