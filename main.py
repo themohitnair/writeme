@@ -1,5 +1,6 @@
 import requests
 import base64
+import chardet
 
 def get_repo_files(username, repo, branch='main'):
     tree_url = f'https://api.github.com/repos/{username}/{repo}/git/trees/{branch}?recursive=1'
@@ -20,8 +21,19 @@ def get_repo_files(username, repo, branch='main'):
             
             if file_response.status_code == 200:
                 file_data = file_response.json()
-                content = base64.b64decode(file_data['content']).decode('utf-8')
-                file_contents[file['path']] = content
+                try:
+                    # Detect the encoding
+                    raw_data = base64.b64decode(file_data['content'])
+                    result = chardet.detect(raw_data)
+                    encoding = result['encoding']
+                    
+                    if encoding:
+                        content = raw_data.decode(encoding)
+                        file_contents[file['path']] = content
+                    else:
+                        print(f"Could not determine encoding for {file['path']}. Skipping.")
+                except (UnicodeDecodeError, base64.binascii.Error) as e:
+                    print(f"Failed to decode content for {file['path']}. Skipping. Error: {e}")
             else:
                 print(f"Failed to retrieve content for {file['path']}: {file_response.status_code}")
     
