@@ -49,6 +49,7 @@ export default function ReadmeGenerator() {
             setRenderedReadme(rendered)
         } catch (err) {
             setError('Failed to generate README. Please check your repository details and try again.')
+            console.log('An Error occureed: ', err)
         } finally {
             setLoading(false)
         }
@@ -59,6 +60,7 @@ export default function ReadmeGenerator() {
             await navigator.clipboard.writeText(readme)
         } catch (err) {
             setError('Failed to copy to clipboard')
+            console.log('An Error occureed: ', err)
         }
     }, [readme])
 
