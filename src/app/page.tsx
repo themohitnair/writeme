@@ -11,7 +11,7 @@ export default function Home() {
                 
                 <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
                     Generate comprehensive README files for your GitHub repositories automatically. 
-                    Just authorize access to your repository, and we'll do the rest.
+                    Just authorize access to your repository, and we&apos;ll do the rest.
                 </p>
 
                 <div className="pt-8">
