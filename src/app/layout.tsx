@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
     title: "WriteME",
     description: "A README Generator",
+    icons: {
+        icon: '/favicon/writeme.svg',
+    },
 };
 
 export default function RootLayout({ children, }: Readonly<{ children: React.ReactNode; }>) {
