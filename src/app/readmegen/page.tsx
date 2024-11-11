@@ -1,9 +1,8 @@
-'use client'
-
 import { useState, useCallback, useMemo } from 'react'
 import { FaClipboard, FaSpinner } from 'react-icons/fa'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
+import { useRouter } from 'next/router'
 import 'highlight.js/styles/github-dark.css'
 import { MarkedOptions } from 'marked'
 
@@ -24,6 +23,9 @@ export default function ReadmeGenerator() {
     const [renderedReadme, setRenderedReadme] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const router = useRouter()
+
+    const { installation_id } = router.query
 
     const generateReadme = useCallback(async (e: React.FormEvent) => {
         e.preventDefault()
@@ -35,8 +37,13 @@ export default function ReadmeGenerator() {
         const branchToUse = branch || 'main'
 
         try {
+            if (!installation_id) {
+                setError('Installation ID is missing. Please authorize the app again.')
+                return
+            }
+
             const response = await fetch(
-                `https://writeme-api.themohitnair.workers.dev/readmegen?repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}`
+                `https://writeme-api.themohitnair.workers.dev/readmegen?repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${installation_id}`
             )
 
             if (!response.ok) {
@@ -49,18 +56,18 @@ export default function ReadmeGenerator() {
             setRenderedReadme(rendered)
         } catch (err) {
             setError('Failed to generate README. Please check your repository details and try again.')
-            console.log('An Error occureed: ', err)
+            console.log('An Error occurred: ', err)
         } finally {
             setLoading(false)
         }
-    }, [repository, branch])
+    }, [repository, branch, installation_id])
 
     const copyToClipboard = useCallback(async () => {
         try {
             await navigator.clipboard.writeText(readme)
         } catch (err) {
             setError('Failed to copy to clipboard')
-            console.log('An Error occureed: ', err)
+            console.log('An Error occurred: ', err)
         }
     }, [readme])
 
