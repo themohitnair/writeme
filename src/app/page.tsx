@@ -16,7 +16,7 @@ export default function Home() {
 
                 <div className="pt-8">
                     <Link 
-                        href="https://github.com/apps/your-app-name/installations/new"
+                        href="https://github.com/apps/writeme-bot"
                         className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900 transition-colors"
                     >
                         <FaGithub className="w-6 h-6 mr-2" />
