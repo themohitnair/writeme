@@ -1,4 +1,3 @@
-// readmegen/page.tsx
 import { Suspense } from 'react'
 import { ReadmeGenerator } from './ReadmeGenerator'
 import { redirect } from 'next/navigation'
@@ -7,7 +6,7 @@ type SearchParams = {
     installation_id?: string
 }
 
-export default function ReadmeGenPage({
+export default async function ReadmeGenPage({
     searchParams,
 }: {
     searchParams: SearchParams
