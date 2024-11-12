@@ -3,18 +3,18 @@
 import { useState, useCallback, useMemo } from 'react'
 import { FaClipboard, FaSpinner, FaHome } from 'react-icons/fa'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 
-export default function ReadmeForm() {
+interface ReadmeFormProps {
+  initialInstallationId?: string
+}
+
+export default function ReadmeForm({ initialInstallationId }: ReadmeFormProps) {
     const [owner, setOwner] = useState('')
     const [repository, setRepository] = useState('')
     const [branch, setBranch] = useState('')
     const [readme, setReadme] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    
-    const searchParams = useSearchParams()
-    const installation_id = searchParams.get('installation_id')
 
     const generateReadme = useCallback(async (e: React.FormEvent) => {
         e.preventDefault()
@@ -25,13 +25,13 @@ export default function ReadmeForm() {
         const branchToUse = branch || 'main'
 
         try {
-            if (!installation_id) {
+            if (!initialInstallationId) {
                 setError('Installation ID is missing. Please authorize the app again.')
                 return
             }
 
             const response = await fetch(
-                `https://writeme-api.themohitnair.workers.dev/readmegen?owner=${encodeURIComponent(owner)}&repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${installation_id}`
+                `https://writeme-api.themohitnair.workers.dev/readmegen?owner=${encodeURIComponent(owner)}&repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${initialInstallationId}`
             )
 
             if (!response.ok) {
@@ -53,7 +53,7 @@ export default function ReadmeForm() {
         } finally {
             setLoading(false)
         }
-    }, [owner, repository, branch, installation_id])
+    }, [owner, repository, branch, initialInstallationId])
 
     const copyToClipboard = useCallback(async () => {
         try {
