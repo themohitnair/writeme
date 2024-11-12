@@ -1,3 +1,5 @@
+"use client"
+
 import { ReadmeGenerator } from './ReadmeGenerator'
 import { redirect, useSearchParams } from 'next/navigation'
 
