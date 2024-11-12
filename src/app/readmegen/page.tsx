@@ -1,26 +1,14 @@
+'use client'
+
 import { useState, useCallback, useMemo } from 'react'
 import { FaClipboard, FaSpinner } from 'react-icons/fa'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
 import { useRouter } from 'next/router'
-import 'highlight.js/styles/github-dark.css'
-import { MarkedOptions } from 'marked'
-
-const markedOptions = {
-    highlight: (code: string, lang: string) => {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext'
-        return hljs.highlight(code, { language }).value
-    },
-    langPrefix: 'hljs language-',
-} as MarkedOptions
-
-marked.setOptions(markedOptions)
 
 export default function ReadmeGenerator() {
+    const [owner, setOwner] = useState('')
     const [repository, setRepository] = useState('')
     const [branch, setBranch] = useState('')
     const [readme, setReadme] = useState('')
-    const [renderedReadme, setRenderedReadme] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const router = useRouter()
@@ -32,7 +20,6 @@ export default function ReadmeGenerator() {
         setLoading(true)
         setError('')
         setReadme('')
-        setRenderedReadme('')
 
         const branchToUse = branch || 'main'
 
@@ -43,49 +30,64 @@ export default function ReadmeGenerator() {
             }
 
             const response = await fetch(
-                `https://writeme-api.themohitnair.workers.dev/readmegen?repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${installation_id}`
+                `https://writeme-api.themohitnair.workers.dev/readmegen?owner=${encodeURIComponent(owner)}&repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${installation_id}`
             )
 
             if (!response.ok) {
-                throw new Error('Failed to generate README')
+                throw new Error('Failed to fetch repository content')
             }
 
-            const data = await response.text()
-            setReadme(data)
-            const rendered = await marked(data)
-            setRenderedReadme(rendered)
+            const data = await response.json()
+
+            let content = ''
+            for (const [filePath, fileContent] of Object.entries(data)) {
+                content += `### File: ${filePath}\n\n`
+                content += `${fileContent}\n\n`
+            }
+
+            setReadme(content)
         } catch (err) {
-            setError('Failed to generate README. Please check your repository details and try again.')
-            console.log('An Error occurred: ', err)
+            setError('Failed to fetch repository content. Please check your repository details and try again.')
+            console.error('An Error occurred: ', err)
         } finally {
             setLoading(false)
         }
-    }, [repository, branch, installation_id])
+    }, [owner, repository, branch, installation_id])
 
     const copyToClipboard = useCallback(async () => {
         try {
             await navigator.clipboard.writeText(readme)
         } catch (err) {
             setError('Failed to copy to clipboard')
-            console.log('An Error occurred: ', err)
+            console.error('An Error occurred: ', err)
         }
     }, [readme])
 
-    const isFormValid = useMemo(() => repository.trim() !== '', [repository])
+    const isFormValid = useMemo(() => owner.trim() !== '' && repository.trim() !== '', [owner, repository])
 
     return (
         <div className="min-h-screen bg-black text-white p-4">
             <div className="max-w-4xl mx-auto space-y-8">
                 <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-400">
-                    Generate Your README
+                    View Repository Content
                 </h1>
 
                 <form onSubmit={generateReadme} className="space-y-6">
                     <div className="space-y-2">
-                        <label htmlFor="repository" className="block text-sm font-medium text-gray-300">
-                            Repository / Branch
+                        <label htmlFor="owner" className="block text-sm font-medium text-gray-300">
+                            Owner / Repository / Branch
                         </label>
                         <div className="flex items-center space-x-2">
+                            <input
+                                type="text"
+                                id="owner"
+                                value={owner}
+                                onChange={(e) => setOwner(e.target.value)}
+                                placeholder="owner"
+                                required
+                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <span className="text-gray-400">/</span>
                             <input
                                 type="text"
                                 id="repository"
@@ -106,7 +108,7 @@ export default function ReadmeGenerator() {
                             />
                         </div>
                         <p className="text-xs text-gray-400">
-                            Format: repository/branch (branch is optional, defaults to main)
+                            Format: owner/repository/branch (branch is optional, defaults to main)
                         </p>
                     </div>
 
@@ -118,10 +120,10 @@ export default function ReadmeGenerator() {
                         {loading ? (
                             <span className="inline-flex items-center">
                                 <FaSpinner className="w-4 h-4 mr-2 animate-spin" />
-                                Generating...
+                                Fetching Content...
                             </span>
                         ) : (
-                            'Generate README'
+                            'View Repository Content'
                         )}
                     </button>
                 </form>
@@ -132,22 +134,19 @@ export default function ReadmeGenerator() {
                     </div>
                 )}
 
-                {renderedReadme && (
+                {readme && (
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold text-blue-400">Generated README</h2>
-                            <button
-                                onClick={copyToClipboard}
-                                className="inline-flex items-center px-3 py-1 text-sm text-blue-400 border border-blue-400 rounded-lg hover:bg-blue-400/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900"
-                            >
-                                <FaClipboard className="w-4 h-4 mr-2" />
-                                Copy to Clipboard
-                            </button>
-                        </div>
-                        <div
-                            className="prose prose-invert max-w-none bg-gray-800 rounded-lg p-4 overflow-auto"
-                            dangerouslySetInnerHTML={{ __html: renderedReadme }}
-                        />
+                        <h2 className="text-xl font-semibold text-blue-400">Repository Content</h2>
+                        <pre className="bg-gray-800 text-white p-4 rounded-lg overflow-auto">
+                            {readme}
+                        </pre>
+                        <button
+                            onClick={copyToClipboard}
+                            className="inline-flex items-center px-3 py-1 text-sm text-blue-400 border border-blue-400 rounded-lg hover:bg-blue-400/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900"
+                        >
+                            <FaClipboard className="w-4 h-4 mr-2" />
+                            Copy to Clipboard
+                        </button>
                     </div>
                 )}
             </div>
