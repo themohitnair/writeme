@@ -1,17 +1,13 @@
 import { ReadmeGenerator } from './ReadmeGenerator'
-import { redirect } from 'next/navigation'
+import { redirect, useSearchParams } from 'next/navigation'
 
-type SearchParams = {
-    installation_id?: string
-}
+export default function ReadmeGenPage() {
+    const searchParams = useSearchParams()
+    const installationId = searchParams.get('installation_id')
 
-export default function ReadmeGenPage({
-    searchParams,
-}: {
-    searchParams: SearchParams
-}) {
-    if (!searchParams.installation_id) {
+    if (!installationId) {
         redirect('/')
     }
-    return <ReadmeGenerator installationId={searchParams.installation_id} />
+
+    return <ReadmeGenerator installationId={installationId} />
 }
