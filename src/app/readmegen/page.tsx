@@ -1,39 +1,154 @@
-import { Suspense } from 'react'
-import ReadmeForm from './readme-form'
+'use client'
 
-interface PageProps {
-    searchParams: { [key: string]: string | string[] | undefined }
-}
+import { useState, useCallback, useMemo } from 'react'
+import { FaClipboard, FaSpinner } from 'react-icons/fa'
+import { useRouter } from 'next/router'
 
-export default function Page({ searchParams }: PageProps) {
-    const installation_id = searchParams.installation_id as string
+export default function ReadmeGenerator() {
+    const [owner, setOwner] = useState('')
+    const [repository, setRepository] = useState('')
+    const [branch, setBranch] = useState('')
+    const [readme, setReadme] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const router = useRouter()
 
-    return (
-        <Suspense fallback={<FormSkeleton />}>
-            <ReadmeForm initialInstallationId={installation_id} />
-        </Suspense>
-    )
-}
+    const { installation_id } = router.query
 
-function FormSkeleton() {
+    const generateReadme = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
+        setReadme('')
+
+        const branchToUse = branch || 'main'
+
+        try {
+            if (!installation_id) {
+                setError('Installation ID is missing. Please authorize the app again.')
+                return
+            }
+
+            const response = await fetch(
+                `https://writeme-api.themohitnair.workers.dev/readmegen?owner=${encodeURIComponent(owner)}&repository=${encodeURIComponent(repository)}&branch=${encodeURIComponent(branchToUse)}&installation_id=${installation_id}`
+            )
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch repository content')
+            }
+
+            const data = await response.json()
+
+            let content = ''
+            for (const [filePath, fileContent] of Object.entries(data)) {
+                content += `### File: ${filePath}\n\n`
+                content += `${fileContent}\n\n`
+            }
+
+            setReadme(content)
+        } catch (err) {
+            setError('Failed to fetch repository content. Please check your repository details and try again.')
+            console.error('An Error occurred: ', err)
+        } finally {
+            setLoading(false)
+        }
+    }, [owner, repository, branch, installation_id])
+
+    const copyToClipboard = useCallback(async () => {
+        try {
+            await navigator.clipboard.writeText(readme)
+        } catch (err) {
+            setError('Failed to copy to clipboard')
+            console.error('An Error occurred: ', err)
+        }
+    }, [readme])
+
+    const isFormValid = useMemo(() => owner.trim() !== '' && repository.trim() !== '', [owner, repository])
+
     return (
         <div className="min-h-screen bg-black text-white p-4">
             <div className="max-w-4xl mx-auto space-y-8">
-                <div className="flex justify-between items-center">
-                    <div className="h-8 w-64 bg-gray-800 animate-pulse"></div>
-                    <div className="h-10 w-32 bg-gray-800 animate-pulse"></div>
-                </div>
-                <div className="space-y-6">
+                <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-400">
+                    View Repository Content
+                </h1>
+
+                <form onSubmit={generateReadme} className="space-y-6">
                     <div className="space-y-2">
-                        <div className="h-6 w-40 bg-gray-800 animate-pulse"></div>
-                        <div className="space-y-2">
-                            <div className="h-10 w-full bg-gray-800 animate-pulse"></div>
-                            <div className="h-10 w-full bg-gray-800 animate-pulse"></div>
-                            <div className="h-10 w-full bg-gray-800 animate-pulse"></div>
+                        <label htmlFor="owner" className="block text-sm font-medium text-gray-300">
+                            Owner / Repository / Branch
+                        </label>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="text"
+                                id="owner"
+                                value={owner}
+                                onChange={(e) => setOwner(e.target.value)}
+                                placeholder="owner"
+                                required
+                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <span className="text-gray-400">/</span>
+                            <input
+                                type="text"
+                                id="repository"
+                                value={repository}
+                                onChange={(e) => setRepository(e.target.value)}
+                                placeholder="repository"
+                                required
+                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <span className="text-gray-400">/</span>
+                            <input
+                                type="text"
+                                id="branch"
+                                value={branch}
+                                onChange={(e) => setBranch(e.target.value)}
+                                placeholder="branch"
+                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                         </div>
+                        <p className="text-xs text-gray-400">
+                            Format: owner/repository/branch (branch is optional, defaults to main)
+                        </p>
                     </div>
-                    <div className="h-10 w-full bg-gray-800 animate-pulse"></div>
-                </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading || !isFormValid}
+                        className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {loading ? (
+                            <span className="inline-flex items-center">
+                                <FaSpinner className="w-4 h-4 mr-2 animate-spin" />
+                                Fetching Content...
+                            </span>
+                        ) : (
+                            'View Repository Content'
+                        )}
+                    </button>
+                </form>
+
+                {error && (
+                    <div className="p-4 text-red-400 bg-red-900/20 rounded-lg">
+                        {error}
+                    </div>
+                )}
+
+                {readme && (
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-semibold text-blue-400">Repository Content</h2>
+                        <pre className="bg-gray-800 text-white p-4 rounded-lg overflow-auto">
+                            {readme}
+                        </pre>
+                        <button
+                            onClick={copyToClipboard}
+                            className="inline-flex items-center px-3 py-1 text-sm text-blue-400 border border-blue-400 rounded-lg hover:bg-blue-400/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900"
+                        >
+                            <FaClipboard className="w-4 h-4 mr-2" />
+                            Copy to Clipboard
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )
