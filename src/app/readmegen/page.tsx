@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { ReadmeGenerator } from './ReadmeGenerator'
 import { redirect } from 'next/navigation'
+import { ReadmeGenerator } from './ReadmeGenerator'
 
 type SearchParams = {
     installation_id?: string

@@ -3,7 +3,11 @@
 import { useState, useCallback, useMemo } from 'react'
 import { FaClipboard, FaSpinner } from 'react-icons/fa'
 
-export function ReadmeGenerator({ installationId }: { installationId: string }) {
+interface ReadmeGeneratorProps {
+    installationId: string;  // prop for installationId
+}
+
+export function ReadmeGenerator({ installationId }: ReadmeGeneratorProps) {
     const [owner, setOwner] = useState('')
     const [repository, setRepository] = useState('')
     const [branch, setBranch] = useState('')
