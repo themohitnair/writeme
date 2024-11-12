@@ -1,15 +1,24 @@
-"use client"
-
+// readmegen/page.tsx
+import { Suspense } from 'react'
 import { ReadmeGenerator } from './ReadmeGenerator'
-import { redirect, useSearchParams } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
-export default function ReadmeGenPage() {
-    const searchParams = useSearchParams()
-    const installationId = searchParams.get('installation_id')
+type SearchParams = {
+    installation_id?: string
+}
 
-    if (!installationId) {
+export default function ReadmeGenPage({
+    searchParams,
+}: {
+    searchParams: SearchParams
+}) {
+    if (!searchParams.installation_id) {
         redirect('/')
     }
 
-    return <ReadmeGenerator installationId={installationId} />
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ReadmeGenerator installationId={searchParams.installation_id} />
+        </Suspense>
+    )
 }
